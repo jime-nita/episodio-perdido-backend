@@ -1,6 +1,6 @@
 const Anime = require('../models/Anime');
 
-// Función para crear un nuevo anime (POST)
+// función para crear un nuevo anime (POST)
 exports.crearAnime = async (req, res) => {
     try {
         const nuevoAnime = new Anime(req.body);
@@ -11,7 +11,7 @@ exports.crearAnime = async (req, res) => {
     }
 };
 
-// Función para ver todos los animes (GET)
+// función para ver todos los animes (GET)
 exports.obtenerAnimes = async (req, res) => {
     try {
         const animes = await Anime.find();
@@ -21,7 +21,6 @@ exports.obtenerAnimes = async (req, res) => {
     }
 };
 
-// Obtener un solo anime por ID
 exports.obtenerAnimePorId = async (req, res) => {
     try {
         const anime = await Anime.findById(req.params.id);
@@ -32,7 +31,7 @@ exports.obtenerAnimePorId = async (req, res) => {
     }
 };
 
-// Actualizar un anime
+// función para actualizar un anime
 exports.actualizarAnime = async (req, res) => {
     try {
         const actualizado = await Anime.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -42,7 +41,7 @@ exports.actualizarAnime = async (req, res) => {
     }
 };
 
-// Eliminar un anime
+// función para eliminar un anime
 exports.eliminarAnime = async (req, res) => {
     try {
         await Anime.findByIdAndDelete(req.params.id);
