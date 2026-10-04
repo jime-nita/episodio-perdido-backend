@@ -29,19 +29,6 @@ function crearSugerencia(nombreUsuario, tituloAnime, descripcion) {
   };
 }
 
-// Assertion type: 
-// 6 - Collections and strings.
-function filtrarPorGenero(animes, genero) {
-  return animes.filter((anime) => anime.genero === genero);
-}
-
-// Assertion type: 
-// 5 - Existence and truthiness.
-function buscarAnimePorTitulo(animes, titulo) {
-  const encontrado = animes.find((anime) => anime.titulo === titulo);
-  return encontrado || null;
-}
-
 // Assertion types: 
 // 2 - Behavioral and mock interaction.
 // 4 - Exceptions and async handling.
@@ -54,7 +41,14 @@ function guardarSugerencia(sugerencia, repositorio) {
   return true;
 }
 
-// Assertion type: 4 - Exceptions and async handling.
+// Assertion type: 
+// 6 - Collections and strings.
+function filtrarPorGenero(animes, genero) {
+  return animes.filter((anime) => anime.genero === genero);
+}
+
+// Assertion type: 
+// 4 - Exceptions and async handling.
 async function obtenerAnimeAsync(animes, titulo) {
   const anime = buscarAnimePorTitulo(animes, titulo);
 
@@ -65,13 +59,18 @@ async function obtenerAnimeAsync(animes, titulo) {
   return anime;
 }
 
+// Assertion type: 
+// 5 - Existence and truthiness.
+function buscarAnimePorTitulo(animes, titulo) {
+  const encontrado = animes.find((anime) => anime.titulo === titulo);
+  return encontrado || null;
+}
+
 module.exports = {
   formatearTitulo,
   crearSugerencia,
-  filtrarPorGenero,
-  buscarAnimePorTitulo,
   guardarSugerencia,
-  obtenerAnimeAsync
+  filtrarPorGenero,
+  obtenerAnimeAsync,
+  buscarAnimePorTitulo
 };
-
-La IA me ayudo a acomodar y corregir mi codigo.
