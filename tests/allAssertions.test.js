@@ -1,12 +1,47 @@
 const { formatearTitulo, crearSugerencia, guardarSugerencia, filtrarPorGenero, obtenerAnimeAsync, buscarAnimePorTitulo } = require("../utils/animeUtilsAssertions");
 
+const {
+  STATIC_TITULO_SUCIO,
+  STATIC_SUGERENCIA_INPUT,
+  STATIC_SUGERENCIA_ESPERADA,
+  createSugerenciaInput,
+  createAnimeList,
+  createShortAnimeList,
+  createRepositorioFalso
+} = require("./fixtures/animeFixtures");
+
+let catalogoReferencia; 
+let animesCortos;       
+let repositorioFalso;   
+
+// HOOKS
+beforeAll(() => {
+  // Created one time: the tests only read this list, they never change it.
+  catalogoReferencia = Object.freeze(createAnimeList());
+});
+
+beforeEach(() => {
+  // Created before each test: every test starts with clean data.
+  animesCortos = createShortAnimeList();
+  repositorioFalso = createRepositorioFalso();
+});
+
+afterEach(() => {
+  // Cleans the calls of the mocks, so one test does not affect the next one.
+  jest.clearAllMocks();
+});
+
+afterAll(() => {
+  catalogoReferencia = null;
+});
+
 // ASSERTION TYPE 1 - Structural equivalence and value equality.
 describe("Episodio Perdido backend - Assertion type 1", () => {
 
   test("UT-001: Title is formatted with a capital letter in each word", () => {
 
-    // Arrange
-    const titulo = "  dRAGON ball z ";
+    // Arrange- my static fixture.
+    const titulo = STATIC_TITULO_SUCIO;
 
     // Act
     const resultado = formatearTitulo(titulo);
@@ -18,27 +53,15 @@ describe("Episodio Perdido backend - Assertion type 1", () => {
 
   test("UT-002: Valid suggestion is created with the expected structure", () => {
 
-    // Arrange
-    const nombreUsuario = "Jimena";
-    const tituloAnime = "naruto shippuden";
-    const descripcion = "Me gustaria ver este anime en la pagina";
+    // Arrange- my static fixtures: input and expected result.
+    const { nombreUsuario, tituloAnime, descripcion } = STATIC_SUGERENCIA_INPUT;
 
     // Act
     const resultado = crearSugerencia(nombreUsuario, tituloAnime, descripcion);
 
     // Assert
-    expect(resultado).toEqual({
-      nombreUsuario: "Jimena",
-      tituloAnime: "Naruto Shippuden",
-      descripcion: "Me gustaria ver este anime en la pagina",
-      estado: "pendiente"
-    });
-    expect(resultado).toStrictEqual({
-      nombreUsuario: "Jimena",
-      tituloAnime: "Naruto Shippuden",
-      descripcion: "Me gustaria ver este anime en la pagina",
-      estado: "pendiente"
-    });
+    expect(resultado).toEqual(STATIC_SUGERENCIA_ESPERADA);
+    expect(resultado).toStrictEqual(STATIC_SUGERENCIA_ESPERADA);
   });
 
 });
@@ -48,14 +71,8 @@ describe("Episodio Perdido backend - Assertion type 2", () => {
 
   test("UT-003: Suggestion is sent to the repository one time", () => {
 
-    // Arrange
-    const sugerencia = {
-      nombreUsuario: "Jimena",
-      tituloAnime: "Naruto Shippuden",
-      descripcion: "Me gustaria ver este anime en la pagina",
-      estado: "pendiente"
-    };
-    const repositorioFalso = { guardar: jest.fn() };
+    // Arrange - the static fixture plus fake repository from beforeEach.
+    const sugerencia = STATIC_SUGERENCIA_ESPERADA;
 
     // Act
     const resultado = guardarSugerencia(sugerencia, repositorioFalso);
@@ -69,10 +86,9 @@ describe("Episodio Perdido backend - Assertion type 2", () => {
 
   test("UT-004: Repository is called in order when two suggestions are saved", () => {
 
-    // Arrange
-    const primera = { nombreUsuario: "Jimena", tituloAnime: "Death Note" };
-    const segunda = { nombreUsuario: "Carlos", tituloAnime: "Bleach" };
-    const repositorioFalso = { guardar: jest.fn() };
+    // Arrange - my factory: I change only the fields I need.
+    const primera = createSugerenciaInput({ tituloAnime: "Death Note" });
+    const segunda = createSugerenciaInput({ nombreUsuario: "Carlos", tituloAnime: "Bleach" });
 
     // Act
     guardarSugerencia(primera, repositorioFalso);
@@ -91,10 +107,8 @@ describe("Episodio Perdido backend - Assertion type 3", () => {
 
   test("UT-005: Suggestion object contains the expected fields", () => {
 
-    // Arrange
-    const nombreUsuario = "Jimena";
-    const tituloAnime = "naruto shippuden";
-    const descripcion = "Me gustaria ver este anime en la pagina";
+    // Arrange - my static fixture
+    const { nombreUsuario, tituloAnime, descripcion } = STATIC_SUGERENCIA_INPUT;
 
     // Act
     const resultado = crearSugerencia(nombreUsuario, tituloAnime, descripcion);
@@ -116,12 +130,8 @@ describe("Episodio Perdido backend - Assertion type 3", () => {
 
   test("UT-006: Filtered list contains the expected animes", () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Bleach", genero: "Shonen", anio: 2004 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - the read-only list created one time in beforeAll.
+    const animes = catalogoReferencia;
 
     // Act
     const resultado = filtrarPorGenero(animes, "Shonen");
@@ -147,10 +157,8 @@ describe("Episodio Perdido backend - Assertion type 4", () => {
 
   test("UT-007: Creating a suggestion with missing data throws an error", () => {
 
-    // Arrange
-    const nombreUsuario = "Jimena";
-    const tituloAnime = "";
-    const descripcion = "Me gustaria ver este anime en la pagina";
+    // Arrange - my factory: I change only the title to make the data invalid.
+    const { nombreUsuario, tituloAnime, descripcion } = createSugerenciaInput({ tituloAnime: "" });
 
     // Act
     const crear = () => crearSugerencia(nombreUsuario, tituloAnime, descripcion);
@@ -163,11 +171,11 @@ describe("Episodio Perdido backend - Assertion type 4", () => {
 
   test("UT-008: Saving without a suggestion throws an error and does not call the repository", () => {
 
-    // Arrange
-    const repositorioFalso = { guardar: jest.fn() };
+    // Arrange - my fake repository from beforeEach.
+    const sugerencia = null;
 
     // Act
-    const guardar = () => guardarSugerencia(null, repositorioFalso);
+    const guardar = () => guardarSugerencia(sugerencia, repositorioFalso);
 
     // Assert
     expect(guardar).toThrow("Falta la sugerencia");
@@ -176,11 +184,8 @@ describe("Episodio Perdido backend - Assertion type 4", () => {
 
   test("UT-009: Searching an existing anime resolves the Promise", async () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - my short list from beforeEach.
+    const animes = animesCortos;
 
     // Act
     const resultado = obtenerAnimeAsync(animes, "Death Note");
@@ -191,11 +196,8 @@ describe("Episodio Perdido backend - Assertion type 4", () => {
 
   test("UT-010: Searching a non-existent anime rejects the Promise", async () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - my short list from beforeEach.
+    const animes = animesCortos;
 
     // Act
     const resultado = obtenerAnimeAsync(animes, "One Piece");
@@ -211,11 +213,8 @@ describe("Episodio Perdido backend - Assertion type 5", () => {
 
   test("UT-011: Searching an existing anime returns a value", () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - my short list from beforeEach.
+    const animes = animesCortos;
 
     // Act
     const resultado = buscarAnimePorTitulo(animes, "Death Note");
@@ -228,11 +227,8 @@ describe("Episodio Perdido backend - Assertion type 5", () => {
 
   test("UT-012: Searching a non-existent anime returns null", () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - my short list from beforeEach.
+    const animes = animesCortos;
 
     // Act
     const resultado = buscarAnimePorTitulo(animes, "One Piece");
@@ -249,12 +245,8 @@ describe("Episodio Perdido backend - Assertion type 6", () => {
 
   test("UT-013: Filtering by genre returns a list with the right animes", () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Bleach", genero: "Shonen", anio: 2004 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - the read-only list created one time in beforeAll.
+    const animes = catalogoReferencia;
 
     // Act
     const resultado = filtrarPorGenero(animes, "Shonen");
@@ -269,11 +261,8 @@ describe("Episodio Perdido backend - Assertion type 6", () => {
 
   test("UT-014: Filtering by a genre without animes returns an empty list", () => {
 
-    // Arrange
-    const animes = [
-      { titulo: "Naruto", genero: "Shonen", anio: 2002 },
-      { titulo: "Death Note", genero: "Suspenso", anio: 2006 }
-    ];
+    // Arrange - my short list from beforeEach.
+    const animes = animesCortos;
 
     // Act
     const resultado = filtrarPorGenero(animes, "Mecha");
@@ -285,8 +274,8 @@ describe("Episodio Perdido backend - Assertion type 6", () => {
 
   test("UT-015: Formatted title has the expected text, length and pattern", () => {
 
-    // Arrange
-    const titulo = "  dRAGON ball z ";
+    // Arrange - my static fixture
+    const titulo = STATIC_TITULO_SUCIO;
 
     // Act
     const resultado = formatearTitulo(titulo);

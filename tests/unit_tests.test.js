@@ -2,8 +2,14 @@ const logger = require("../middlewares/logger");
 const Sugerencia = require("../models/Sugerencia");
 const animeController = require("../controllers/animeController");
 const Anime = require("../models/Anime");
+const {
+  STATIC_LOGGER_REQUEST,
+  createSugerenciaInput,
+  createExpressReq,
+  createExpressRes
+} = require("./fixtures/animeFixtures");
 
-// Mock of the Anime model, i did this because i wantthe tests never touch the real database.
+// Mock of the Anime model, I did this because I want the tests to never touch the real database.
 jest.mock("../models/Anime", () => ({
   findById: jest.fn(),
   findByIdAndDelete: jest.fn()
@@ -11,36 +17,49 @@ jest.mock("../models/Anime", () => ({
 
 describe("Episodio Perdido backend - Unit tests", () => {
 
+  // HOOK for all the tests: cleans the calls of the mocks after each test.
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   // Test 1: Primitive values arrange.
-  test("UT-001: Logger prints the request method and route, and calls next", () => {
+  describe("Logger middleware", () => {
+    let logSpy;
+    let next;
 
-    // Arrange
-    const method = "GET";
-    const url = "/api/animes";
-    const req = { method: method, url: url };
-    const res = {};
-    let nextWasCalled = false;
-    const next = () => { nextWasCalled = true; };
-    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    beforeEach(() => {
+      // New spy for each test.
+      logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+      next = jest.fn();
+    });
 
-    // Act
-    logger(req, res, next);
+    afterEach(() => {
+      // The spy is always restored, even if the test fails.
+      logSpy.mockRestore();
+    });
 
-    // Assert
-    expect(logSpy).toHaveBeenCalledWith("Petición recibida: GET en la ruta /api/animes");
-    expect(nextWasCalled).toBe(true);
+    test("UT-001: Logger prints the request method and route, and calls next", () => {
 
-    logSpy.mockRestore();
+      // Arrange - my static fixture.
+      const { method, url } = STATIC_LOGGER_REQUEST;
+      const req = { method: method, url: url };
+      const res = {};
+
+      // Act
+      logger(req, res, next);
+
+      // Assert
+      expect(logSpy).toHaveBeenCalledWith("Petición recibida: GET en la ruta /api/animes");
+      expect(next).toHaveBeenCalled();
+    });
   });
 
   // Test 2: Object based arrange.
   test("UT-002: Suggestion without description fails validation", () => {
 
-    // Arrange
-    const sugerencia = new Sugerencia({
-      nombreUsuario: "Jimena",
-      tituloAnime: "Naruto"
-    });
+    // Arrange - my factory: I only remove the description.
+    const datos = createSugerenciaInput({ descripcion: undefined });
+    const sugerencia = new Sugerencia(datos);
 
     // Act
     const validationError = sugerencia.validateSync();
@@ -52,24 +71,27 @@ describe("Episodio Perdido backend - Unit tests", () => {
   });
 
   // Test 3: Mock based arrange.
-  test("UT-003: Searching an anime with a non-existent ID returns 404 and deletes nothing", async () => {
+  describe("Anime controller", () => {
+    let req;
+    let res;
 
-    // Arrange
-    Anime.findById.mockResolvedValue(null);
-    const req = { params: { id: "1234" } };
-    const res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn()
-    };
+    beforeEach(() => {
+      Anime.findById.mockResolvedValue(null);
+      req = createExpressReq({ params: { id: "1234" } });
+      res = createExpressRes();
+    });
 
-    // Act
-    await animeController.obtenerAnimePorId(req, res);
+    test("UT-003: Searching an anime with a non-existent ID returns 404 and deletes nothing", async () => {
+      
+      // Act
+      await animeController.obtenerAnimePorId(req, res);
 
-    // Assert
-    expect(Anime.findById).toHaveBeenCalledWith("1234");
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ mensaje: "Anime no encontrado" });
-    expect(Anime.findByIdAndDelete).not.toHaveBeenCalled();
+      // Assert
+      expect(Anime.findById).toHaveBeenCalledWith("1234");
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ mensaje: "Anime no encontrado" });
+      expect(Anime.findByIdAndDelete).not.toHaveBeenCalled();
+    });
   });
 
 });

@@ -40,6 +40,21 @@ const createShortAnimeList = () => [
 
 const createRepositorioFalso = () => ({ guardar: jest.fn() });
 
+const STATIC_LOGGER_REQUEST = Object.freeze({
+  method: "GET",
+  url: "/api/animes"
+});
+
+const createExpressReq = (overrides = {}) => ({
+  params: { id: "1234" },
+  ...overrides
+});
+
+const createExpressRes = () => ({
+  status: jest.fn().mockReturnThis(),
+  json: jest.fn()
+});
+
 module.exports = {
   STATIC_TITULO_SUCIO,
   STATIC_SUGERENCIA_INPUT,
@@ -48,5 +63,8 @@ module.exports = {
   createAnime,
   createAnimeList,
   createShortAnimeList,
-  createRepositorioFalso
+  createRepositorioFalso,
+  STATIC_LOGGER_REQUEST,
+  createExpressReq,
+  createExpressRes
 };
