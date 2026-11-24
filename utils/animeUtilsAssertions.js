@@ -17,7 +17,7 @@ function formatearTitulo(titulo) {
 // 3 - Asymmetric and partial matchers.
 // 4 - Exceptions and async handling.
 function crearSugerencia(nombreUsuario, tituloAnime, descripcion) {
-  if (!nombreUsuario || !tituloAnime || !descripcion) {
+if (!nombreUsuario || !tituloAnime || !descripcion || tituloAnime.trim() === "") {
     throw new Error("Faltan datos de la sugerencia");
   }
 
