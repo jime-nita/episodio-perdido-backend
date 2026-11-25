@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test:smoke": "jest tests/smoke",
+    "test:regression": "jest tests/regression",
+    "coverage": "jest --coverage --collectCoverageFrom=utils/**/*.js"
   },
   "keywords": [],
   "author": "",
